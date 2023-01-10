@@ -44,14 +44,55 @@ namespace Gunluk.Areas.Admin.Controllers
 
                 _db.Gonderiler.Add(gonderi);
                 _db.SaveChanges();
-                return RedirectToAction(nameof(Index), new { Durum = "Eklendi" });
+                return RedirectToAction(nameof(Index), new { Durum = "eklendi" });
             }
             KategorileriYukle();
             return View("Yonet");
         }
         public IActionResult Duzenle(int id)
         {
+            var gonderi = _db.Gonderiler.Find(id);
+            if (gonderi == null)
+                return NotFound();
+            var vm = new GonderiViewModel()
+            {
+                Baslik = gonderi.Baslik,
+                Icerik = gonderi.Icerik,
+                Id = gonderi.Id,
+                KategoriId = gonderi.KategoriId
+            };
+            KategorileriYukle();
+            return View("Yonet", vm);
+        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult Duzenle(GonderiViewModel vm)
+        {
+            if (ModelState.IsValid)
+            {
+                var gonderi = _db.Gonderiler.Find(vm.Id);
+                if (gonderi == null)
+                    return NotFound();
+                gonderi.Baslik = vm.Baslik;
+                gonderi.Icerik = vm.Icerik;
+                gonderi.DegistirilmeZamani = DateTime.Now;
+                gonderi.KategoriId = vm.KategoriId!.Value;
+                _db.SaveChanges();
+                return RedirectToAction(nameof(Index), new { Durum = "duzenlendi" });
+            }
+            KategorileriYukle();
             return View("Yonet");
+        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult Sil(int id)
+        {
+            var gonderi = _db.Gonderiler.Find(id);
+
+            if (gonderi == null)
+                return NotFound();
+
+            _db.Gonderiler.Remove(gonderi);
+            _db.SaveChanges();
+            return RedirectToAction(nameof(Index), new { Durum = "silindi" });
         }
     }
 }
